@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sql-agent-server",
+  "main": "src/app.ts",
+  "compatibility_date": "2026-02-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "hyperdrive": [{
+    "binding": "HYPERDRIVE_DEV",
+    "id": "3f651e00445148e08a54bce9b1291b1e",
+    "localConnectionString": "postgresql://postgres:postgres@localhost:5432/postgres"
+  }
+]
+  // "vars": {
+  //   "MY_VAR": "my-variable"
+  // },
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "MY_KV_NAMESPACE",
+  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  //   }
+  // ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MY_BUCKET",
+  //     "bucket_name": "my-bucket"
+  //   }
+  // ],
+  // "d1_databases": [
+  //   {
+  //     "binding": "MY_DB",
+  //     "database_name": "my-database",
+  //     "database_id": ""
+  //   }
+  // ],
+  // "ai": {
+  //   "binding": "AI"
+  // },
+  // "observability": {
+  //   "enabled": true,
+  //   "head_sampling_rate": 1
+  // }
+
+}
