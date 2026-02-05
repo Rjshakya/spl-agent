@@ -6,6 +6,6 @@ export const createDB = async (connectionString: string) => {
   return drizzle(connectionString);
 };
 
-export const appDB = async () => {
+export const getAppDB = async () => {
   return drizzle(env.HYPERDRIVE_DEV.connectionString);
 };

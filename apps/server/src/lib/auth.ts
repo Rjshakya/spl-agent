@@ -1,10 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { appDB } from "../db/instance"; // your drizzle instance
+import { getAppDB } from "../db/instance"; // your drizzle instance
 import { env } from "cloudflare:workers";
 
 export const getAuth = async () => {
-  const db = await appDB();
+  const db = await getAppDB();
 
   const auth = betterAuth({
     database: drizzleAdapter(db, {

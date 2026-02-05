@@ -1,11 +1,15 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
+import { v7 } from "uuid";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const connections = pgTable(
   "connections",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$default(() => v7()),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -26,3 +30,6 @@ export const connectionRelations = relations(connections, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const connectionInsertSchema = createInsertSchema(connections);
+export const connectionSelectSchema = createSelectSchema(connections);

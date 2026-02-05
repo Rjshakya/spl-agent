@@ -44,4 +44,5 @@ export interface SqlGenerationContext {
   schema: DatabaseSchema;
   userQuery: string;
   history?: string[];
+  userId:string;
 }

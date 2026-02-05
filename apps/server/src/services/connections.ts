@@ -19,7 +19,7 @@ export class DatabaseError extends Data.TaggedError("DatabaseError")<{
 export interface ConnectionService {
   readonly createConnection: (
     data: InferInsertModel<typeof connections>,
-  ) => Effect.Effect<void, ConnectionError>;
+  ) => Effect.Effect<string, ConnectionError>;
   readonly getConnectionById: (
     id: string,
   ) => Effect.Effect<typeof connections.$inferSelect, ConnectionError>;
@@ -28,11 +28,12 @@ export interface ConnectionService {
   ) => Effect.Effect<(typeof connections.$inferSelect)[], ConnectionError>;
   readonly deleteConnection: (
     id: string,
-  ) => Effect.Effect<void, ConnectionError>;
+  ) => Effect.Effect<string, ConnectionError>;
 }
 
 // Create the ConnectionService Tag using Effect 3.x API
-export const ConnectionService = Context.GenericTag<ConnectionService>("ConnectionService");
+export const ConnectionService =
+  Context.GenericTag<ConnectionService>("ConnectionService");
 
 // Implementation factory
 export function createConnectionService(
@@ -43,7 +44,11 @@ export function createConnectionService(
       pipe(
         Effect.tryPromise({
           try: async () => {
-            await db.insert(connections).values(data);
+            const [connection] = await db
+              .insert(connections)
+              .values(data)
+              .returning({ id: connections.id });
+            return connection.id;
           },
           catch: (error) =>
             new DatabaseError({
@@ -69,7 +74,7 @@ export function createConnectionService(
               .from(connections)
               .where(eq(connections.id, id))
               .limit(1);
-            return result[0]
+            return result[0];
           },
           catch: (error) =>
             new DatabaseError({
@@ -114,7 +119,11 @@ export function createConnectionService(
       pipe(
         Effect.tryPromise({
           try: async () => {
-            await db.delete(connections).where(eq(connections.id, id));
+            const [connection] = await db
+              .delete(connections)
+              .where(eq(connections.id, id))
+              .returning({ id: connections.id });
+            return connection.id;
           },
           catch: (error) =>
             new DatabaseError({
