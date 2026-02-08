@@ -7,6 +7,7 @@ type SqlGeneratorWorkflowInput = {
   userId: string;
   userPrompt: string;
   threadId: string;
+  connectionId?: string;
 };
 
 export class SqlGeneratorWorkflowError extends Data.TaggedError(
@@ -18,80 +19,51 @@ export class SqlGeneratorWorkflowError extends Data.TaggedError(
 }> {}
 
 const SqlGeneratorWorkflow = async (input: SqlGeneratorWorkflowInput) => {
-  const { userId, userPrompt, threadId } = input;
+  const { userId, userPrompt, threadId, connectionId } = input;
+
   const retryPolicy = Schedule.exponential("200 millis");
-  const retry = Effect.retry(retryPolicy);
   const timeOut = Effect.timeout("10 minutes");
 
   const connectionService = await ConnectionService();
   const contextService = DatabaseContextService.getContext;
   const sqlGenService = SqlQueryGeneratorService;
 
-  const userConnection = await Effect.runPromise(
-    connectionService
-      .getPgConnectionsOfUser(userId)
-      .pipe(Effect.map((data) => data[0].connectionString)),
-  );
+  const getConnectionString = Effect.gen(function* () {
+    if (connectionId) {
+      const getConnection =
+        yield* connectionService.getConnectionById(connectionId);
+      return getConnection.connectionString;
+    }
 
-  const generateContext = Effect.tryPromise({
-    try: async () => {
-      const res = await Effect.runPromise(
-        contextService(userConnection, userPrompt, userId, threadId),
-      );
+    const userConnections =
+      yield* connectionService.getPgConnectionsOfUser(userId);
+    return userConnections[0].connectionString;
+  });
+  const program = Effect.gen(function* () {
+    const connectionString = yield* getConnectionString;
 
-      console.log(res.schemaContext);
-      return res.schemaContext;
-    },
-    catch: (e) => {
-      throw new Error("");
-    },
-  }).pipe(
-    Effect.mapError(
-      (e) =>
-        new SqlGeneratorWorkflowError({
-          message: "failed to generateContext",
-          cause: e,
-          step: "generateContext",
-        }),
-    ),
-    retry,
-    timeOut,
-  );
-
-  const generateSql = (context: string) =>
-    Effect.tryPromise({
-      try: async () => {
-        const output = await Effect.runPromise(
-          sqlGenService.generateSqlQuery({
-            connectionString: userConnection,
-            context,
-            userId,
-            userQuery: userPrompt,
-            threadId,
-          }),
-        );
-
-        return output;
-      },
-      catch: (e) => {
-        return e;
-      },
-    }).pipe(
-      retry,
-      Effect.mapError(
-        (e) =>
-          new SqlGeneratorWorkflowError({
-            message: "failed to generate query",
-            step: "generateSql",
-            cause: e,
-          }),
-      ),
-      timeOut,
+    const context = yield* contextService(
+      connectionString,
+      userPrompt,
+      userId,
+      threadId,
     );
 
-  const program = pipe(generateContext, Effect.andThen(generateSql));
-  const result = await Effect.runPromise(program);
-  return result;
+    const generateSql = yield* Effect.retry(
+      sqlGenService.generateSqlQuery({
+        connectionString,
+        context: context.schemaContext,
+        threadId,
+        userId,
+        userQuery: userPrompt,
+      }),
+      retryPolicy,
+    ).pipe(timeOut);
+
+    return generateSql;
+  });
+
+  return Effect.runPromise(program);
 };
 
 export default SqlGeneratorWorkflow;

@@ -44,7 +44,6 @@ export function getTables(
   });
 }
 
-
 /**
  * Interface for column information
  */

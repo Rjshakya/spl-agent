@@ -112,8 +112,8 @@ importers:
         specifier: ^4.1.17
         version: 4.1.18(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
       '@tambo-ai/react':
-        specifier: ^0.73.1
-        version: 0.73.1(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(@types/json-schema@7.0.15)(@types/node@24.10.9)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(effect@3.19.15)(quansync@0.2.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(zod-to-json-schema@3.25.1(zod@4.3.6))(zod@4.3.6)
+        specifier: ^0.75.0
+        version: 0.75.0(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(@types/json-schema@7.0.15)(@types/node@24.10.9)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(effect@3.19.15)(quansync@0.2.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(zod-to-json-schema@3.25.1(zod@4.3.6))(zod@4.3.6)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -174,6 +174,9 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
+      zustand:
+        specifier: ^5.0.11
+        version: 5.0.11(@types/react@19.2.10)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -2421,10 +2424,10 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
 
-  '@tambo-ai/react@0.73.1':
-    resolution: {integrity: sha512-pVPEL2n8YpmZSMvg6G8u4ZUWArvW4hWod9UpCAP3bCu6Ii6ZqW6oTb/Sx70t2f/I/VZ4QjWjNDiQlLhlXceluw==}
+  '@tambo-ai/react@0.75.0':
+    resolution: {integrity: sha512-QZCau71myApLP0kF8RoKsXW/QFKAeao+yOoozuYokz6PR12ZWojmMgl+gPLy15YJbcbcdX4KAZtFDWBJVclqoA==}
     peerDependencies:
-      '@modelcontextprotocol/sdk': ^1.25.1
+      '@modelcontextprotocol/sdk': ^1.26.0
       '@types/react': ^18.0.0 || ^19.0.0
       '@types/react-dom': ^18.0.0 || ^19.0.0
       react: ^18.0.0 || ^19.0.0
@@ -2437,8 +2440,8 @@ packages:
       zod-to-json-schema:
         optional: true
 
-  '@tambo-ai/typescript-sdk@0.87.0':
-    resolution: {integrity: sha512-k0PQhfrI6KqjCNepEc4rdDZj8RjrARU6ymSxIjNdsN7wUKLbfV3iDOhDSF/OAcPanm2FcmumALsYWRkXPhWOaQ==}
+  '@tambo-ai/typescript-sdk@0.90.0':
+    resolution: {integrity: sha512-+iTXgaZ79VSAoWjHDagmubaLUg7OS5UlZcDSbi72dv4oOy7eHpomssMr+knXD3F7uYVbB9PwU6+DfOI8LKatUQ==}
     hasBin: true
 
   '@tanstack/query-core@5.90.20':
@@ -5337,6 +5340,24 @@ packages:
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
+  zustand@5.0.11:
+    resolution: {integrity: sha512-fdZY+dk7zn/vbWNCYmzZULHRrss0jx5pPFiOuMZ/5HJN6Yv3u+1Wswy/4MpZEkEGhtNH+pwxZB8OKgUBPzYAGg==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
+
 snapshots:
 
   '@ag-ui/core@0.0.43':
@@ -7534,12 +7555,12 @@ snapshots:
       tailwindcss: 4.1.18
       vite: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)
 
-  '@tambo-ai/react@0.73.1(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(@types/json-schema@7.0.15)(@types/node@24.10.9)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(effect@3.19.15)(quansync@0.2.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(zod-to-json-schema@3.25.1(zod@4.3.6))(zod@4.3.6)':
+  '@tambo-ai/react@0.75.0(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(@types/json-schema@7.0.15)(@types/node@24.10.9)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(effect@3.19.15)(quansync@0.2.11)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)(zod-to-json-schema@3.25.1(zod@4.3.6))(zod@4.3.6)':
     dependencies:
       '@ag-ui/core': 0.0.43
       '@standard-community/standard-json': 0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(effect@3.19.15)(quansync@0.2.11)(zod-to-json-schema@3.25.1(zod@4.3.6))(zod@4.3.6)
       '@standard-schema/spec': 1.1.0
-      '@tambo-ai/typescript-sdk': 0.87.0
+      '@tambo-ai/typescript-sdk': 0.90.0
       '@tanstack/react-query': 5.90.20(react@19.2.0)
       '@types/react': 19.2.10
       '@types/react-dom': 19.2.3(@types/react@19.2.10)
@@ -7571,7 +7592,7 @@ snapshots:
       - typescript
       - valibot
 
-  '@tambo-ai/typescript-sdk@0.87.0': {}
+  '@tambo-ai/typescript-sdk@0.90.0': {}
 
   '@tanstack/query-core@5.90.20': {}
 
@@ -10836,3 +10857,9 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.3.6: {}
+
+  zustand@5.0.11(@types/react@19.2.10)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0)):
+    optionalDependencies:
+      '@types/react': 19.2.10
+      react: 19.2.0
+      use-sync-external-store: 1.6.0(react@19.2.0)

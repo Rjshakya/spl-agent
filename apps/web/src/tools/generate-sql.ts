@@ -1,28 +1,44 @@
 import { z } from "zod";
 import type { TamboTool } from "@tambo-ai/react";
 import client from "@/hc.js";
+import { useConnectionStore } from "@/store/connection-store";
 
-export const GenerateSqlToolInputSchema = z
+export const GenerateSqlInputSchema = z
   .object({
-    prompt: z
+    // connectionId: z
+    //   .string()
+    //   .describe("The ID of the database connection to use"),
+    context: z
+      .string()
+      .describe("Database schema context to help generate the query"),
+    userQuery: z
       .string()
       .describe("Natural language description of the SQL query to generate"),
-    threadId: z.string().describe("Current thread Id , it is very important"),
+    threadId: z.string().describe("Current conversation thread ID"),
   })
-  .describe("Input for generating SQL query from natural language");
+  .describe("Input for generating SQL query with provided context");
 
-export const GenerateSqlToolOutputSchema = z
-  .string()
-  .describe("The generated SQL query");
+export const GenerateSqlOutputSchema = z
+  .object({
+    query: z.string().describe("The generated SQL query"),
+  })
+  .describe("Generated SQL query result");
 
-export type GenerateSqlToolInput = z.infer<typeof GenerateSqlToolInputSchema>;
-export type GenerateSqlToolOutput = z.infer<typeof GenerateSqlToolOutputSchema>;
+export type GenerateSqlInput = z.infer<typeof GenerateSqlInputSchema>;
+export type GenerateSqlOutput = z.infer<typeof GenerateSqlOutputSchema>;
 
 async function generateSqlFunction(
-  input: GenerateSqlToolInput,
-): Promise<GenerateSqlToolOutput> {
-  const response = await client.api.sql.generate.$post({
-    json: { prompt: input.prompt, threadId: input.threadId },
+  input: GenerateSqlInput,
+): Promise<GenerateSqlOutput> {
+  const connectionId = useConnectionStore.getState().selectedConnectionId;
+  if (!connectionId) throw new Error("No connection is selected");
+  const response = await client.api.tools.sql.generate.$post({
+    json: {
+      connectionId,
+      context: input.context,
+      userQuery: input.userQuery,
+      threadId: input.threadId,
+    },
   });
 
   if (!response.ok) {
@@ -30,19 +46,17 @@ async function generateSqlFunction(
     throw new Error(`Failed to generate SQL: ${error}`);
   }
 
-  const data = await response.json();
-  const clean = data.data.query.replaceAll(/\\n/g, " ");
-  console.log(clean);
-  return clean;
+  const result = await response.json();
+  return result.data as GenerateSqlOutput;
 }
 
 export const generateSqlTool: TamboTool = {
   name: "generateSql",
   description:
-    "Generate a SQL query from natural language description. This tool converts user's natural language queries question into a proper SQL query that can be executed against the user's database. use it to generate db related queries.",
+    "Generate a SQL query from natural language using provided database context. Use this when you have context about the database schema and want to create a query.",
   tool: generateSqlFunction,
-  inputSchema: GenerateSqlToolInputSchema,
-  outputSchema: GenerateSqlToolOutputSchema,
+  inputSchema: GenerateSqlInputSchema,
+  outputSchema: GenerateSqlOutputSchema,
   annotations: {
     tamboStreamableHint: false,
   },

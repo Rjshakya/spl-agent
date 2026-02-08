@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card.js";
+} from "@/components/ui/card";
 import { useCallback } from "react";
 import { env } from "@/lib/env";
 
@@ -40,17 +40,18 @@ export function LoginPage() {
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center  p-4">
+      <Card className="w-full max-w-md p-14">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-semibold tracking-tighter">Welcome Back</CardTitle>
+          <CardDescription className="">
             Sign in to access your SQL Agent dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button
-            variant="outline"
+            size={"lg"}
+            variant="default"
             className="w-full"
             onClick={handleGoogleSignIn}
           >

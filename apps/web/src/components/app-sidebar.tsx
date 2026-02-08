@@ -1,10 +1,10 @@
 import * as React from "react";
 import {
-  IconHome,
-  IconMessageCircle,
-  IconDatabase,
+ 
   IconChevronRight,
+  IconPlus,
 } from "@tabler/icons-react";
+import { useTamboThreadList, type TamboThread } from "@tambo-ai/react";
 import { NavUser } from "@/components/nav-user.js";
 import {
   Collapsible,
@@ -25,56 +25,58 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-} from "@/components/ui/sidebar.js";
+} from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { ChatIcon, FolderIcon, HomeIcon } from "@/icons/icon-list-1";
 
 // Navigation items for the main menu
 const navItems = [
   {
     title: "Home",
     url: "/dashboard",
-    icon: IconHome,
+    icon: HomeIcon,
   },
   {
     title: "Chat",
     url: "/dashboard/chat",
-    icon: IconMessageCircle,
+    icon: ChatIcon,
   },
   {
     title: "Connections",
     url: "/dashboard/connections",
-    icon: IconDatabase,
-  },
-];
-
-// Mock conversations/threads - in a real app, these would come from an API
-const conversations = [
-  {
-    id: "1",
-    title: "User analytics query",
-    url: "/dashboard/chat",
-  },
-  {
-    id: "2",
-    title: "Sales report analysis",
-    url: "/dashboard/chat",
-  },
-  {
-    id: "3",
-    title: "Database schema review",
-    url: "/dashboard/chat",
-  },
-  {
-    id: "4",
-    title: "Customer insights",
-    url: "/dashboard/chat",
+    icon: FolderIcon,
   },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data } = authClient.useSession();
   const navigate = useNavigate();
+  const { threadId } = useParams<{ threadId: string }>();
+  const { data: threadsData, isPending, isError } = useTamboThreadList();
+
+  // Handle both paginated and array responses
+  const threads = React.useMemo(() => {
+    if (!threadsData) return null;
+    console.log(threadsData);
+
+    // Check if it has a data property (paginated response)
+    if ("items" in threadsData && Array.isArray(threadsData.items)) {
+      return threadsData.items as TamboThread[];
+    }
+    return null;
+  }, [threadsData]);
+
+  const handleNewChat = () => {
+    navigate("/dashboard/chat");
+  };
+
+  const handleThreadClick = (id: string) => {
+    navigate(`/dashboard/chat/${id}`);
+  };
+
+ 
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -82,12 +84,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <a href="/dashboard">
               <SidebarMenuButton size="lg">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <IconDatabase className="size-4" />
-                </div>
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square h-6 w-4 items-center justify-center rounded-lg"></div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">SQL Agent</span>
-                  <span className="text-xs text-muted-foreground">v1.0.0</span>
+                  <span className="font-medium uppercase font-mono">
+                    SQL Agent
+                  </span>
                 </div>
               </SidebarMenuButton>
             </a>
@@ -113,27 +114,65 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Recent Conversations */}
+        {/* Thread List */}
         <SidebarGroup>
           <Collapsible defaultOpen className="group/collapsible">
             <SidebarGroupLabel>
               <CollapsibleTrigger className="flex items-center w-full">
-                Recent Conversations
+                Conversations
                 <IconChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
               </CollapsibleTrigger>
             </SidebarGroupLabel>
             <CollapsibleContent>
               <SidebarMenuSub>
-                {conversations.map((conversation) => (
-                  <SidebarMenuSubItem key={conversation.id}>
-                    <SidebarMenuSubButton
-                      onClick={() => navigate(`${conversation.url}`)}
-                    >
-                      <IconMessageCircle className="size-3" />
-                      <span>{conversation.title}</span>
-                    </SidebarMenuSubButton>
+                {/* New Chat Button */}
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    onClick={handleNewChat}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <IconPlus className="size-3" />
+                    <span>New Chat</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+
+                {/* Thread List */}
+                {isPending && (
+                  <SidebarMenuSubItem>
+                    <span className="flex h-7 items-center px-2 text-xs text-muted-foreground">
+                      Loading...
+                    </span>
                   </SidebarMenuSubItem>
-                ))}
+                )}
+
+                {isError && (
+                  <SidebarMenuSubItem>
+                    <span className="flex h-7 items-center px-2 text-xs text-muted-foreground">
+                      Error loading threads
+                    </span>
+                  </SidebarMenuSubItem>
+                )}
+
+                {threads &&
+                  threads?.map((thread) => (
+                    <SidebarMenuSubItem key={thread.id}>
+                      <SidebarMenuSubButton
+                        onClick={() => handleThreadClick(thread.id)}
+                        isActive={threadId === thread.id}
+                      >
+                        <ChatIcon />
+                        <span>{thread?.name || "chat"}</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+
+                {!isPending && !isError && threads?.length === 0 && (
+                  <SidebarMenuSubItem>
+                    <span className="flex h-7 items-center px-2 text-xs text-muted-foreground">
+                      No conversations yet
+                    </span>
+                  </SidebarMenuSubItem>
+                )}
               </SidebarMenuSub>
             </CollapsibleContent>
           </Collapsible>
@@ -141,16 +180,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => navigate("/dashboard/connections")}
-            >
-              <IconDatabase className="size-4" />
-              <span>Manage Connections</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
         <NavUser
           user={{
             name: data?.user.name ?? "User",

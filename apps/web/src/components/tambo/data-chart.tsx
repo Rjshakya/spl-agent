@@ -15,26 +15,44 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { useEffect } from "react";
 
+// Flat structure matching executeSql tool output
 export const DataChartPropsSchema = z
   .object({
+    success: z
+      .boolean()
+      .optional()
+      .describe("Whether query executed successfully"),
     type: z
       .enum(["bar", "line"])
       .optional()
       .describe("Chart type: bar or line"),
-    data: z.array(z.object()).optional().describe("Array of data objects"),
+    rows: z
+      .array(z.any())
+      .optional()
+      .describe(
+        "It is rows , from data ,(data.rows) , that you will get from tool call result.",
+      ),
     xKey: z
       .string()
       .optional()
       .describe("Column name for X-axis (categorical)"),
     yKey: z.string().optional().describe("Column name for Y-axis (numeric)"),
-    title: z.string().optional().describe("Chart title"),
+    sql: z.string().optional().describe("The executed SQL query"),
   })
   .describe("Display data as bar or line chart");
 
 export type DataChartProps = z.infer<typeof DataChartPropsSchema>;
 
-function DataChart({ type, data, xKey, yKey = "", title }: DataChartProps) {
+function DataChart({
+  success,
+  type,
+  rows,
+  xKey,
+  yKey = "",
+  sql,
+}: DataChartProps) {
   const chartConfig: ChartConfig = {
     [yKey]: {
       label: yKey,
@@ -42,25 +60,36 @@ function DataChart({ type, data, xKey, yKey = "", title }: DataChartProps) {
     },
   };
 
-  if (!type || !data || !xKey || !yKey || !title) return null;
+  useEffect(() => {
+    console.log({
+      success,
+      type,
+      rows,
+      xKey,
+      yKey,
+      sql,
+    });
+  }, [success, type, rows, xKey, yKey, sql]);
+
+  if (!success || !type || !rows || !xKey || !yKey) return null;
 
   return (
     <Card className="w-full">
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">
-            {title || "Data Visualization"}
+            {sql || "Data Visualization"}
           </CardTitle>
           <Badge variant="outline" className="text-xs capitalize">
             {type} Chart
           </Badge>
         </div>
-        <CardDescription>Showing {data.length} data points</CardDescription>
+        <CardDescription>Showing {rows.length} data points</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="min-h-75 w-full">
           {type === "bar" ? (
-            <BarChart accessibilityLayer data={data}>
+            <BarChart accessibilityLayer data={rows}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey={xKey}
@@ -72,7 +101,7 @@ function DataChart({ type, data, xKey, yKey = "", title }: DataChartProps) {
               <Bar dataKey={yKey} fill={`var(--color-${yKey})`} radius={4} />
             </BarChart>
           ) : (
-            <LineChart accessibilityLayer data={data}>
+            <LineChart accessibilityLayer data={rows}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey={xKey}

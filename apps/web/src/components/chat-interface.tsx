@@ -1,54 +1,32 @@
 import * as React from "react";
 import { useTamboThread, useTamboThreadInput } from "@tambo-ai/react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { SendIcon, StopIcon } from "@/icons/icon-list-1";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ChatInput } from "./chat-input";
 
 export function ChatInterface() {
-  const { thread, cancel } = useTamboThread();
-  const { value, setValue, submit, isPending } = useTamboThreadInput();
+  const { thread } = useTamboThread();
+  const { setValue } = useTamboThreadInput();
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [thread?.messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!value.trim()) return;
-
-    if (isPending) {
-      return cancel(thread.id);
-    }
-
-    await submit({
-      streamResponse: true,
-      forceToolChoice: "required",
-    });
-    setValue(" ");
-  };
-
   return (
-    <div className="flex flex-col h-screen max-h-screen">
-      <Card className="flex-1 m-4 overflow-hidden flex flex-col">
-        <CardHeader className="border-b pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle>SQL Agent</CardTitle>
-            <Badge variant="outline">Tambo AI</Badge>
-          </div>
-        </CardHeader>
-
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col relative ">
+      <Card className="flex-1 m-4 overflow-hidden flex flex-col ring-0 bg-background gap-1 relative">
+        <CardContent
+          className="flex-1 overflow-y-auto  px-0 space-y-4 max-w-2xl mx-auto w-full no-scrollbar pb-40 pt-8 "
+          style={{ scrollbarWidth: "initial" }}
+        >
           {thread?.messages.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
               <p className="text-lg mb-2">Welcome to SQL Agent!</p>
               <p className="text-sm">
                 Ask questions about your data in natural language.
               </p>
-              <div className="mt-6 space-y-2">
+              <div className="mt-24 space-y-2">
                 <p className="text-xs text-muted-foreground">Try asking:</p>
                 {[
                   "How many users do we have?",
@@ -81,22 +59,24 @@ export function ChatInterface() {
                   message.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted"
-                } rounded-lg p-3`}
+                } rounded-lg p-3 overflow-hidden text-pretty`}
               >
                 {Array.isArray(message.content) ? (
                   message.content.map((part, i) =>
                     part.type === "text" ? (
                       part.text?.includes("SELECT") ? (
-                        <code> {part.text}</code>
+                        <code className=" text-wrap ">{part.text}</code>
                       ) : (
-                        <p key={i} className="text-sm whitespace-pre-wrap">
+                        <p key={i} className=" truncate text-sm whitespace-pre-wrap">
                           {part.text}
                         </p>
                       )
                     ) : null,
                   )
                 ) : (
-                  <p className="text-sm">{`--> ${message.content}`}</p>
+                  <div className="text-wrap">
+                    <p className="text-sm">{`--> ${message.content}`}</p>
+                  </div>
                 )}
 
                 {message.toolCallRequest && (
@@ -115,22 +95,9 @@ export function ChatInterface() {
           <div ref={messagesEndRef} />
         </CardContent>
 
-        <Separator />
-
-        <CardContent className="">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Input
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Ask about your data..."
-              disabled={isPending}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon">
-              {isPending ? <StopIcon /> : <SendIcon className="fill-white" />}
-            </Button>
-          </form>
-        </CardContent>
+        <CardFooter className="px-0 border-0 fixed bottom-0 left-32 z-50 w-full flex items-center justify-center">
+          <ChatInput />
+        </CardFooter>
       </Card>
     </div>
   );

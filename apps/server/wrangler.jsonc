@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "sql-agent-server",
+	"name": "ask-sb-server",
 	"main": "src/app.ts",
 	"compatibility_date": "2026-02-02",
 	"compatibility_flags": [

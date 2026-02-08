@@ -4,7 +4,7 @@ import { TamboProvider } from "@/providers/tambo-provider";
 
 export function App() {
   return (
-    <TamboProvider >
+    <TamboProvider>
       <RouterProvider router={router} />
     </TamboProvider>
   );

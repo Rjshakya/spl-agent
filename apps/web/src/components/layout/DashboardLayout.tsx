@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { AppSidebar } from "@/components/app-sidebar.js";
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,13 +8,12 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb.js";
-import { Separator } from "@/components/ui/separator.js";
+} from "@/components/ui/breadcrumb";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar.js";
+} from "@/components/ui/sidebar";
 
 function getBreadcrumbs(pathname: string) {
   const paths = pathname.split("/").filter(Boolean);
@@ -44,12 +43,8 @@ export function DashboardLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 fixed w-full top-0 z-99 bg-background">
           <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
           <Breadcrumb>
             <BreadcrumbList>
               {breadcrumbs.map((crumb, index) => (
