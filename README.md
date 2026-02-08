@@ -15,9 +15,9 @@
 
 ---
 
-## ✨ What is SQL Agent?
+## ✨ What is ASK DB ?
 
-SQL Agent is an intelligent web application that transforms how users interact with PostgreSQL databases. Instead of writing complex SQL queries manually, users can simply ask questions in plain English and receive:
+ASK DB is an intelligent web application that transforms how users interact with PostgreSQL databases. Instead of writing complex SQL queries manually, users can simply ask questions in plain English and receive:
 
 - **Auto-generated SQL queries** tailored to your database schema
 - **Query results** displayed in beautiful, interactive data tables
