@@ -9,10 +9,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card.js";
-import { Button } from "@/components/ui/button.js";
-import { Badge } from "@/components/ui/badge.js";
-import { Separator } from "@/components/ui/separator.js";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export function HomePage() {
   // Mock data - in a real app, these would come from an API

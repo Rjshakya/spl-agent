@@ -1,14 +1,25 @@
 {
   "name": "server",
   "type": "module",
+  "exports": {
+    "./hc": {
+      "import": {
+        "default": "./dist/src/hono-client.js",
+        "types": "./dist/src/hono-client.d.ts"
+      }
+    }
+  },
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --port 8000",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:push": "pnpm drizzle-kit push",
-    "db:studio": "pnpm drizzle-kit studio"
+    "db:studio": "pnpm drizzle-kit studio",
+    "build": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.984.0",
+    "@aws-sdk/s3-request-presigner": "^3.984.0",
     "@cloudflare/containers": "^0.1.0",
     "@hono/zod-validator": "^0.7.6",
     "@opencode-ai/sdk": "^1.1.48",

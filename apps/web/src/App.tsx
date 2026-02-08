@@ -1,10 +1,10 @@
-import { RouterProvider } from "react-router";
-import { router } from "@/routes/index.js";
-import { TamboProvider } from "@/providers/tambo-provider.js";
+import { RouterProvider } from "react-router-dom";
+import { router } from "@/routes/index";
+import { TamboProvider } from "@/providers/tambo-provider";
 
 export function App() {
   return (
-    <TamboProvider>
+    <TamboProvider >
       <RouterProvider router={router} />
     </TamboProvider>
   );

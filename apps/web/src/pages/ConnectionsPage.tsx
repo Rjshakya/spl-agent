@@ -1,11 +1,5 @@
-import { useState } from "react";
-import {
-  IconDatabase,
-  IconPlus,
-  IconTrash,
-  IconCheck,
-  IconX,
-} from "@tabler/icons-react";
+import { useCallback, useState } from "react";
+import { IconDatabase, IconPlus, IconTrash } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import {
@@ -17,64 +11,55 @@ import {
 } from "@/components/ui/card.js";
 import { Badge } from "@/components/ui/badge.js";
 import { Separator } from "@/components/ui/separator.js";
-
-interface Connection {
-  id: string;
-  name: string;
-  connectionString: string;
-  createdAt: Date;
-}
+import { Label } from "@/components/ui/label";
+import {
+  createNewConnection,
+  deleteConnection,
+  useConnections,
+  type CreateConnection,
+} from "@/hooks/use-connections";
+import { Spinner } from "@/components/ui/spinner";
+import { Error } from "@/components/error";
+import { useUser } from "@/hooks/use-user";
+import { toast } from "sonner";
 
 export function ConnectionsPage() {
-  const [connections, setConnections] = useState<Connection[]>([
-    {
-      id: "1",
-      name: "Production DB",
-      connectionString: "postgresql://localhost:5432/production",
-      createdAt: new Date("2026-01-15"),
-    },
-  ]);
+  const { user } = useUser();
+  const { connections, connectionsError, connectionsLoading } =
+    useConnections();
+
   const [isAdding, setIsAdding] = useState(false);
-  const [newConnectionName, setNewConnectionName] = useState("");
-  const [newConnectionString, setNewConnectionString] = useState("");
-  const [testStatus, setTestStatus] = useState<
-    "idle" | "testing" | "success" | "error"
-  >("idle");
+  const [newConnection, setNewConnection] = useState<CreateConnection>({
+    name: "",
+    connectionString: "",
+    source: "postgres",
+    userId: user?.id ?? "",
+  });
 
-  const handleAddConnection = () => {
-    if (!newConnectionName.trim() || !newConnectionString.trim()) return;
+  const handleAddConnection = useCallback(async () => {
+    if (
+      !newConnection.name.trim() ||
+      !newConnection.connectionString.trim() ||
+      !user
+    )
+      return;
 
-    const newConnection: Connection = {
-      id: Date.now().toString(),
-      name: newConnectionName.trim(),
-      connectionString: newConnectionString.trim(),
-      createdAt: new Date(),
-    };
-
-    setConnections([...connections, newConnection]);
-    setNewConnectionName("");
-    setNewConnectionString("");
+    await createNewConnection({ ...newConnection, userId: user.id });
     setIsAdding(false);
-    setTestStatus("idle");
-  };
-
-  const handleDeleteConnection = (id: string) => {
-    setConnections(connections.filter((c) => c.id !== id));
-  };
-
-  const handleTestConnection = () => {
-    setTestStatus("testing");
-    // Simulate connection test
-    setTimeout(() => {
-      setTestStatus("success");
-    }, 1500);
-  };
+  }, [newConnection, user]);
 
   const maskConnectionString = (str: string) => {
     // Simple masking for display purposes
     if (str.length <= 20) return str;
     return str.substring(0, 20) + "...";
   };
+
+  const handleDeleteConnections = useCallback(async (id: string) => {
+    await deleteConnection(id);
+  }, []);
+
+  if (connectionsLoading) return <Spinner />;
+  if (connectionsError) return <Error message="failed to load connections" />;
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -103,19 +88,26 @@ export function ConnectionsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Connection Name</label>
+              <Label className="text-sm font-medium">Connection Name</Label>
               <Input
                 placeholder="e.g., Production Database"
-                value={newConnectionName}
-                onChange={(e) => setNewConnectionName(e.target.value)}
+                value={newConnection.name}
+                onChange={(e) =>
+                  setNewConnection({ ...newConnection, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Connection String</label>
+              <Label className="text-sm font-medium">Connection Name</Label>
               <Input
                 placeholder="postgresql://user:password@host:port/database"
-                value={newConnectionString}
-                onChange={(e) => setNewConnectionString(e.target.value)}
+                value={newConnection.connectionString}
+                onChange={(e) =>
+                  setNewConnection({
+                    ...newConnection,
+                    connectionString: e.target.value,
+                  })
+                }
               />
               <p className="text-muted-foreground text-xs">
                 Format: postgresql://username:password@host:port/database
@@ -123,43 +115,29 @@ export function ConnectionsPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
-                onClick={handleTestConnection}
-                disabled={
-                  testStatus === "testing" || !newConnectionString.trim()
-                }
-              >
-                {testStatus === "testing" ? (
-                  <>Testing...</>
-                ) : testStatus === "success" ? (
-                  <>
-                    <IconCheck className="mr-2 h-4 w-4 text-green-500" />
-                    Connection successful
-                  </>
-                ) : testStatus === "error" ? (
-                  <>
-                    <IconX className="mr-2 h-4 w-4 text-red-500" />
-                    Connection failed
-                  </>
-                ) : (
-                  "Test Connection"
-                )}
-              </Button>
-              <Button
                 variant="ghost"
                 onClick={() => {
                   setIsAdding(false);
-                  setNewConnectionName("");
-                  setNewConnectionString("");
-                  setTestStatus("idle");
+                  setNewConnection({
+                    ...newConnection,
+                    connectionString: "",
+                    name: "",
+                  });
                 }}
               >
                 Cancel
               </Button>
               <Button
-                onClick={handleAddConnection}
+                onClick={() =>
+                  toast.promise(handleAddConnection, {
+                    error: "failed to create new connection",
+                    success: "connection added",
+                    loading: "creating connection...",
+                  })
+                }
                 disabled={
-                  !newConnectionName.trim() || !newConnectionString.trim()
+                  !newConnection.name.trim() ||
+                  !newConnection.connectionString.trim()
                 }
               >
                 Save Connection
@@ -170,7 +148,7 @@ export function ConnectionsPage() {
       )}
 
       <div className="grid gap-4">
-        {connections.length === 0 ? (
+        {connections && connections.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <IconDatabase className="h-12 w-12 text-muted-foreground/50" />
@@ -188,6 +166,8 @@ export function ConnectionsPage() {
             </CardContent>
           </Card>
         ) : (
+          connections &&
+          connections.length > 0 &&
           connections.map((connection) => (
             <Card key={connection.id}>
               <CardContent className="flex items-center justify-between py-4">
@@ -206,14 +186,23 @@ export function ConnectionsPage() {
                       {maskConnectionString(connection.connectionString)}
                     </p>
                     <p className="text-muted-foreground text-xs mt-1">
-                      Added {connection.createdAt.toLocaleDateString()}
+                      Added {connection.createdAt}
                     </p>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleDeleteConnection(connection.id)}
+                  onClick={() =>
+                    toast.promise(
+                      async () => handleDeleteConnections(connection.id),
+                      {
+                        error: "failed to delete connection",
+                        loading: "deleting connection...",
+                        success: "connection deleted",
+                      },
+                    )
+                  }
                   className="text-muted-foreground hover:text-destructive"
                 >
                   <IconTrash className="h-4 w-4" />

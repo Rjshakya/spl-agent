@@ -26,6 +26,8 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar.js";
+import { authClient } from "@/lib/auth-client";
+import { useNavigate } from "react-router-dom";
 
 // Navigation items for the main menu
 const navItems = [
@@ -71,6 +73,8 @@ const conversations = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data } = authClient.useSession();
+  const navigate = useNavigate();
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -122,12 +126,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuSub>
                 {conversations.map((conversation) => (
                   <SidebarMenuSubItem key={conversation.id}>
-                    <a href={conversation.url}>
-                      <SidebarMenuSubButton>
-                        <IconMessageCircle className="size-3" />
-                        <span>{conversation.title}</span>
-                      </SidebarMenuSubButton>
-                    </a>
+                    <SidebarMenuSubButton
+                      onClick={() => navigate(`${conversation.url}`)}
+                    >
+                      <IconMessageCircle className="size-3" />
+                      <span>{conversation.title}</span>
+                    </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 ))}
               </SidebarMenuSub>
@@ -139,16 +143,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <a href="/dashboard/connections">
-              <SidebarMenuButton size="sm">
-                <IconDatabase className="size-4" />
-                <span>Manage Connections</span>
-              </SidebarMenuButton>
-            </a>
+            <SidebarMenuButton
+              onClick={() => navigate("/dashboard/connections")}
+            >
+              <IconDatabase className="size-4" />
+              <span>Manage Connections</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         <NavUser
-          user={{ name: "User", email: "user@example.com", avatar: "" }}
+          user={{
+            name: data?.user.name ?? "User",
+            email: data?.user?.email ?? "user@gmail.com",
+            avatar: data?.user?.image ?? "",
+          }}
         />
       </SidebarFooter>
 

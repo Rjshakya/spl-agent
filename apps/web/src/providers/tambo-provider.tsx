@@ -1,22 +1,26 @@
 "use client";
 
 import { TamboProvider as TamboProviderPrimitive } from "@tambo-ai/react";
-import { sqlResultsComponent } from "@/components/tambo/sql-results.js";
-import { dataChartComponent } from "@/components/tambo/data-chart.js";
-import { executeSqlTool } from "@/tools/execute-sql.js";
+import { sqlResultsComponent } from "@/components/tambo/sql-results";
+import { dataChartComponent } from "@/components/tambo/data-chart";
+import { queryPermissionComponent } from "@/components/tambo/query-permission-box";
+import { generateSqlTool } from "@/tools/generate-sql";
+import { executeQueryTool } from "@/tools/execute-query";
+import { env } from "@/lib/env";
 
-const TAMBO_API_KEY = import.meta.env.VITE_TAMBO_API_KEY || "";
-
-const components = [sqlResultsComponent, dataChartComponent];
-
-const tools = [executeSqlTool];
+const components = [
+  sqlResultsComponent,
+  dataChartComponent,
+  queryPermissionComponent,
+];
+const tools = [generateSqlTool, executeQueryTool];
 
 interface TamboProviderProps {
   children: React.ReactNode;
 }
 
 export function TamboProvider({ children }: TamboProviderProps) {
-  if (!TAMBO_API_KEY) {
+  if (!env.tamboApiKey) {
     console.error(
       "TAMBO_API_KEY is not set. Please set VITE_TAMBO_API_KEY in your .env file.",
     );
@@ -24,7 +28,7 @@ export function TamboProvider({ children }: TamboProviderProps) {
 
   return (
     <TamboProviderPrimitive
-      apiKey={TAMBO_API_KEY}
+      apiKey={env.tamboApiKey}
       components={components}
       tools={tools}
     >

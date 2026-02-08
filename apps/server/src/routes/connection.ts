@@ -3,19 +3,26 @@ import { HONOVARS } from "../middlewares/auth";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
 import { connectionInsertSchema } from "../db/schema/connections";
-import { ConnectionService, createConnection } from "../services/connections";
+import { ConnectionService } from "../services/connections";
 import { Effect } from "effect";
 import { ApiResponse } from "../lib/api-success";
+import { DATA_SOURCES } from "../lib/data-sources";
 
 export const connectionApi = new Hono<HONOVARS>()
   .post(
-    "/connection",
-    zValidator("json", connectionInsertSchema),
+    "/",
+    zValidator(
+      "json",
+      connectionInsertSchema.extend({
+        source: z.enum(DATA_SOURCES),
+      }),
+    ),
     async (c) => {
       const params = c.req.valid("json");
-      const service = ConnectionService;
+      const service = await ConnectionService();
+
       const connection = await Effect.runPromise(
-        service.Service.createConnection(params),
+        service.createConnection(params),
       );
 
       return c.json(
@@ -26,7 +33,7 @@ export const connectionApi = new Hono<HONOVARS>()
   )
   .get("/my", async (c) => {
     const userId = c.get("userId");
-    const service = ConnectionService.Service;
+    const service = await ConnectionService();
     const data = await Effect.runPromise(
       service.getConnectionsByUserId(userId),
     );
@@ -38,7 +45,7 @@ export const connectionApi = new Hono<HONOVARS>()
     zValidator("param", z.object({ connectionId: z.string() })),
     async (c) => {
       const { connectionId } = c.req.valid("param");
-      const service = ConnectionService.Service;
+      const service = await ConnectionService();
       const data = await Effect.runPromise(
         service.getConnectionById(connectionId),
       );
@@ -50,7 +57,7 @@ export const connectionApi = new Hono<HONOVARS>()
     zValidator("param", z.object({ connectionId: z.string() })),
     async (c) => {
       const { connectionId } = c.req.valid("param");
-      const service = ConnectionService.Service;
+      const service = await ConnectionService();
       const data = await Effect.runPromise(
         service.deleteConnection(connectionId),
       );

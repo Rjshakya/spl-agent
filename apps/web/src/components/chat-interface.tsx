@@ -1,21 +1,14 @@
-"use client";
-
 import * as React from "react";
 import { useTamboThread, useTamboThreadInput } from "@tambo-ai/react";
-import { Button } from "@/components/ui/button.js";
-import { Input } from "@/components/ui/input.js";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card.js";
-import { Badge } from "@/components/ui/badge.js";
-import { Separator } from "@/components/ui/separator.js";
-import { IconSend, IconLoader2 } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { SendIcon, StopIcon } from "@/icons/icon-list-1";
 
 export function ChatInterface() {
-  const { thread } = useTamboThread();
+  const { thread, cancel } = useTamboThread();
   const { value, setValue, submit, isPending } = useTamboThreadInput();
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -25,11 +18,17 @@ export function ChatInterface() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value.trim() || isPending) return;
+    if (!value.trim()) return;
+
+    if (isPending) {
+      return cancel(thread.id);
+    }
 
     await submit({
       streamResponse: true,
+      forceToolChoice: "required",
     });
+    setValue(" ");
   };
 
   return (
@@ -87,13 +86,17 @@ export function ChatInterface() {
                 {Array.isArray(message.content) ? (
                   message.content.map((part, i) =>
                     part.type === "text" ? (
-                      <p key={i} className="text-sm whitespace-pre-wrap">
-                        {part.text}
-                      </p>
+                      part.text?.includes("SELECT") ? (
+                        <code> {part.text}</code>
+                      ) : (
+                        <p key={i} className="text-sm whitespace-pre-wrap">
+                          {part.text}
+                        </p>
+                      )
                     ) : null,
                   )
                 ) : (
-                  <p className="text-sm">{String(message.content)}</p>
+                  <p className="text-sm">{`--> ${message.content}`}</p>
                 )}
 
                 {message.toolCallRequest && (
@@ -114,7 +117,7 @@ export function ChatInterface() {
 
         <Separator />
 
-        <CardContent className="p-4">
+        <CardContent className="">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={value}
@@ -123,16 +126,8 @@ export function ChatInterface() {
               disabled={isPending}
               className="flex-1"
             />
-            <Button
-              type="submit"
-              disabled={isPending || !value.trim()}
-              size="icon"
-            >
-              {isPending ? (
-                <IconLoader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <IconSend className="h-4 w-4" />
-              )}
+            <Button type="submit" size="icon">
+              {isPending ? <StopIcon /> : <SendIcon className="fill-white" />}
             </Button>
           </form>
         </CardContent>

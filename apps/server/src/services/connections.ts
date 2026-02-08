@@ -1,8 +1,10 @@
-import { Context, Data, Effect, pipe } from "effect";
+import { Data, Effect, pipe } from "effect";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { InferInsertModel } from "drizzle-orm";
-import { eq } from "drizzle-orm";
-import { connections } from "../db/schema/connections.js";
+import { and, eq } from "drizzle-orm";
+import { connections } from "../db/schema/connections";
+import { getAppDB } from "../db/instance.js";
+import { DATA_SOURCES, PG_DATA_SOURCE } from "../lib/data-sources";
 
 // Error types using Data.TaggedError
 export class ConnectionError extends Data.TaggedError("ConnectionError")<{
@@ -26,14 +28,13 @@ export interface ConnectionService {
   readonly getConnectionsByUserId: (
     userId: string,
   ) => Effect.Effect<(typeof connections.$inferSelect)[], ConnectionError>;
+  readonly getPgConnectionsOfUser: (
+    id: string,
+  ) => Effect.Effect<(typeof connections.$inferSelect)[], ConnectionError>;
   readonly deleteConnection: (
     id: string,
   ) => Effect.Effect<string, ConnectionError>;
 }
-
-// Create the ConnectionService Tag using Effect 3.x API
-export const ConnectionService =
-  Context.GenericTag<ConnectionService>("ConnectionService");
 
 // Implementation factory
 export function createConnectionService(
@@ -139,50 +140,38 @@ export function createConnectionService(
             }),
         ),
       ),
+    getPgConnectionsOfUser: (userId) =>
+      pipe(
+        Effect.tryPromise({
+          try: async () => {
+            return await db
+              .select()
+              .from(connections)
+              .where(
+                and(
+                  eq(connections.userId, userId),
+                  eq(connections.source, PG_DATA_SOURCE),
+                ),
+              );
+          },
+          catch: (error) =>
+            new DatabaseError({
+              message: "Failed to get user connections",
+              cause: error,
+            }),
+        }),
+        Effect.mapError(
+          (err) =>
+            new ConnectionError({
+              message: err.message,
+              cause: err.cause,
+            }),
+        ),
+      ),
   };
 }
 
-// Convenience functions that work with the service
-export function createConnection(
-  data: InferInsertModel<typeof connections>,
-): Effect.Effect<void, ConnectionError, ConnectionService> {
-  return Effect.gen(function* () {
-    const service = yield* ConnectionService;
-    return yield* service.createConnection(data);
-  });
-}
-
-export function getConnectionById(
-  id: string,
-): Effect.Effect<
-  typeof connections.$inferSelect | null,
-  ConnectionError,
-  ConnectionService
-> {
-  return Effect.gen(function* () {
-    const service = yield* ConnectionService;
-    return yield* service.getConnectionById(id);
-  });
-}
-
-export function getConnectionsByUserId(
-  userId: string,
-): Effect.Effect<
-  (typeof connections.$inferSelect)[],
-  ConnectionError,
-  ConnectionService
-> {
-  return Effect.gen(function* () {
-    const service = yield* ConnectionService;
-    return yield* service.getConnectionsByUserId(userId);
-  });
-}
-
-export function deleteConnection(
-  id: string,
-): Effect.Effect<void, ConnectionError, ConnectionService> {
-  return Effect.gen(function* () {
-    const service = yield* ConnectionService;
-    return yield* service.deleteConnection(id);
-  });
-}
+export const ConnectionService = async () => {
+  const db = await getAppDB();
+  return createConnectionService(db);
+};

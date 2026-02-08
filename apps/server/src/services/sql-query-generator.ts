@@ -1,14 +1,12 @@
-import { Context, Data, Effect } from "effect";
+import { Data, Effect } from "effect";
 import { Output, stepCountIs, tool, ToolLoopAgent } from "ai";
 import z from "zod";
-import { createDB } from "../db/instance.js";
-import {
-  getTables,
-  getTableColumns,
-  getContextAgent,
-} from "./context-service.js";
-import { getOpenRouter } from "../lib/openrouter.js";
-import { SQL_GENERATOR_PROMPT } from "./sql-generator-prompts.js";
+import { createDB } from "../db/instance";
+import { getContextAgent } from "./context-service";
+import { getOpenRouter } from "../lib/openrouter";
+import { SQL_GENERATOR_PROMPT } from "../prompts/sql-generator-prompts";
+import { getTables, getTableColumns } from "../lib/context-tools";
+import { getMessages, saveMessages } from "../lib/message-history";
 
 // Error types
 export class SqlQueryGeneratorError extends Data.TaggedError(
@@ -153,6 +151,7 @@ export interface SqlGeneratorInput {
   userId: string;
   context: string;
   userQuery: string;
+  threadId: string;
 }
 
 /**
@@ -169,7 +168,7 @@ export interface SqlGeneratorOutput {
 
 const getSQLAgent = (input: SqlGeneratorInput) => {
   const agent = new ToolLoopAgent({
-    model: openrouter.chat("openai/gpt-4o"),
+    model: openrouter.chat("moonshotai/kimi-k2.5"),
     tools: {
       getTables: getTablesTool(input.connectionString),
       getColumns: getColumnsTool(input.connectionString),
@@ -202,30 +201,84 @@ export function generateSqlQuery(
     try: async () => {
       const agent = getSQLAgent(input);
 
+      let messages = await getMessages({
+        agent: "getSQLAgent",
+        threadId: input.threadId,
+      });
+
+      if (messages) {
+        messages = [
+          ...messages,
+          {
+            role: "user",
+            content: `
+          ## Context (Database Schema):
+          ${input.context}
+
+          ## User Query:
+          "${input.userQuery}"
+
+          ## Instructions:
+          Generate a SQL query to answer the user's question. Remember to:
+          1. Test your query using the testQuery tool
+          2. Only output the final result when the test passes
+          3. If the test fails, analyze the error and retry with fixes or additional context gathering
+        `.trim(),
+          },
+        ];
+      } else {
+        messages = [
+          {
+            role: "user",
+            content: `
+          ## Context (Database Schema):
+          ${input.context}
+
+          ## User Query:
+          "${input.userQuery}"
+
+          ## Instructions:
+          Generate a SQL query to answer the user's question. Remember to:
+          1. Test your query using the testQuery tool
+          2. Only output the final result when the test passes
+          3. If the test fails, analyze the error and retry with fixes or additional context gathering
+        `.trim(),
+          },
+        ];
+      }
+
       const { output } = await agent.generate({
         prompt: `
-## Context (Database Schema):
-${input.context}
+          ## Context (Database Schema):
+          ${input.context}
 
-## User Query:
-"${input.userQuery}"
+          ## User Query:
+          "${input.userQuery}"
 
-## Instructions:
-Generate a SQL query to answer the user's question. Remember to:
-1. Use the provided context as your primary schema reference
-2. Test your query using the testQuery tool
-3. Only output the final result when the test passes
-4. If the test fails, analyze the error and retry with fixes or additional context gathering`,
+          ## Instructions:
+          Generate a SQL query to answer the user's question. Remember to:
+          1. Test your query using the testQuery tool
+          2. Only output the final result when the test passes
+          3. If the test fails, analyze the error and retry with fixes or additional context gathering
+        `.trim(),
+      });
+
+      await saveMessages({
+        agent: "getSQLAgent",
+        threadId: input.threadId,
+        messages: [...messages, { role: "system", content: output?.query }],
       });
 
       return output as SqlGeneratorOutput;
     },
-    catch: (error) =>
-      new SqlQueryGeneratorError({
+    catch: (error) => {
+      console.log(error);
+      return new SqlQueryGeneratorError({
         message: "Failed to generate SQL query",
         cause: error,
         step: "generateSqlQuery/agent",
-      }),
+      });
+    },
   });
 }
 
@@ -239,25 +292,10 @@ export interface SqlQueryGeneratorService {
   ) => Effect.Effect<SqlGeneratorOutput, SqlQueryGeneratorError>;
 }
 
-export const SqlQueryGeneratorService =
-  Context.GenericTag<SqlQueryGeneratorService>("SqlQueryGeneratorService");
-
 export function createSqlQueryGeneratorService(): SqlQueryGeneratorService {
   return {
     generateSqlQuery,
   };
 }
 
-// Convenience function to use the service
-export function generateSqlQueryWithService(
-  input: SqlGeneratorInput,
-): Effect.Effect<
-  SqlGeneratorOutput,
-  SqlQueryGeneratorError,
-  SqlQueryGeneratorService
-> {
-  return Effect.gen(function* () {
-    const service = yield* SqlQueryGeneratorService;
-    return yield* service.generateSqlQuery(input);
-  });
-}
+export const SqlQueryGeneratorService = { ...createSqlQueryGeneratorService() };

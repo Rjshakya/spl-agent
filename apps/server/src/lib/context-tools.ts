@@ -1,7 +1,5 @@
-import { tool } from "ai";
-import z from "zod";
-import { DatabaseContextError } from "../services/context-service";
 import { Effect } from "effect";
+import { DatabaseContextError } from "../services/context-service";
 import { createDB } from "../db/instance";
 
 /**
@@ -45,6 +43,7 @@ export function getTables(
     return result;
   });
 }
+
 
 /**
  * Interface for column information
@@ -183,52 +182,3 @@ export function getTableColumns(
     return columns;
   });
 }
-
-export const getTablesTool = (connectionString: string) =>
-tool({
-    title: "getTables",
-    description: "Retrieve all table names from the PostgreSQL database",
-    inputSchema: z.object({}), // No input needed
-    execute: async () => {
-      const effect = getTables(connectionString);
-      const result = await Effect.runPromise(effect);
-      return { tables: result };
-    },
-    outputSchema: z.object({
-      tables: z.array(z.string()),
-    }),
-});
-
-/**
- * Tool to get columns for a specific table
- */
-export const getTableColumnsTool = (connectionString: string) =>
-  tool({
-    title: "getTableColumns",
-    description:
-      "Retrieve all columns and their types for a specific table. Returns column name, data type, nullability, primary key status, and foreign key relationships.",
-    inputSchema: z.object({
-      tableName: z.string().describe("The name of the table to inspect"),
-    }),
-    execute: async ({ tableName }) => {
-      const effect = getTableColumns(connectionString, tableName);
-      const result = await Effect.runPromise(effect);
-      return { columns: result };
-    },
-    outputSchema: z.object({
-      columns: z.array(
-        z.object({
-          name: z.string(),
-          type: z.string(),
-          isNullable: z.boolean(),
-          isPrimary: z.boolean(),
-          foreignKey: z
-            .object({
-              table: z.string(),
-              column: z.string(),
-            })
-            .optional(),
-        }),
-      ),
-    }),
-});

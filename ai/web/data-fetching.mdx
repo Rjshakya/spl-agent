@@ -1,0 +1,33 @@
+# Data Fetching using Hono Client
+
+## Architecture Overview
+
+Server will export hono app client instance
+const frontend will use that.
+
+## Implementation Details
+
+### Server Side
+
+```typescript
+import type { app } from "./app";
+import { hc } from "hono/client";
+
+export type Client = ReturnType<typeof hc<typeof app>>;
+export const hcWithType = (...args: Parameters<typeof hc>): Client =>
+  hc<typeof app>(...args);
+```
+
+```typescript client side
+import { hcWithType } from "server/hc";
+
+const client = hcWithType("http://localhost:8000", {
+  init: { credentials: "include" },
+});
+export default client;
+```
+
+This client have typed api of backend , with all type safety , inputs , outputs.
+This is how will gonnna use.
+
+we will make custom hook for each backend service , (if not too big).

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/app-sidebar.js";
 import {
   Breadcrumb,

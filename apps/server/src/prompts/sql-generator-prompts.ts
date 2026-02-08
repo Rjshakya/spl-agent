@@ -37,5 +37,6 @@ You are an expert PostgreSQL query generator. Your task is to convert natural la
 
 ## Output:
 You must output a structured object with a single "query" field containing the valid, tested SQL query.
-
-Remember: The testQuery tool is your safety net. Never output a query that hasn't been tested and passed.`;
+- When you return the select queries , make all the fields selecting are under quote ' '.
+- this is helpful for case-sensitivity. 
+Remember: The testQuery tool is your safety net. Never output a query that hasn't been tested and passed.`.trim();

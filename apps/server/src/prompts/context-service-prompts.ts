@@ -24,4 +24,4 @@ Provide a structured summary including:
 - Relevant tables and their purposes
 - Key columns for each table
 - Relationships between tables (foreign keys)- Any constraints or special column types that might affect query writing
-`
+`.trim();
